@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 export const metadata: Metadata = {
   title: "MomentumScan — Real-time Small-Cap Scanner",
   description:
-    "Spot Ross Cameron-style momentum plays as they happen. Real-time gap%, RVOL, and float filters updated every minute.",
+    "Spot momentum plays as they happen. Real-time gap%, RVOL, and float filters updated every minute.",
   openGraph: {
     title: "MomentumScan",
     description: "Real-time momentum day trading scanner",

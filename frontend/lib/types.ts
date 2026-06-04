@@ -23,7 +23,7 @@ export interface FilterConfig {
   min_rvol: number
 }
 
-export const ROSS_CAMERON_DEFAULTS: FilterConfig = {
+export const MOMENTUM_DEFAULTS: FilterConfig = {
   min_price: 1,
   max_price: 20,
   max_float_millions: 20,

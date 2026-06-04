@@ -1,6 +1,6 @@
 from .models import StockSnapshot, FilterConfig
 
-ROSS_CAMERON_DEFAULTS = FilterConfig(
+MOMENTUM_DEFAULTS = FilterConfig(
     min_price=1.0,
     max_price=20.0,
     max_float_millions=20.0,

@@ -17,8 +17,8 @@ const FEATURES = [
   },
   {
     icon: <Filter className="w-5 h-5 text-green-400" />,
-    title: "Ross Cameron presets",
-    desc: "Pre-loaded with the exact filters Ross Cameron uses: $1–$20, ≤20M float, ≥10% gap, ≥5× RVOL.",
+    title: "Momentum presets",
+    desc: "Pre-loaded with proven small-cap filters: $1–$20, ≤20M float, ≥10% gap, ≥5× RVOL.",
   },
   {
     icon: <BarChart2 className="w-5 h-5 text-green-400" />,
@@ -29,7 +29,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: "01", title: "Scanner watches the market", body: "Every minute, we process every US stock and calculate gap%, RVOL, float, and price in real time." },
-  { n: "02", title: "Filters catch the setups",   body: "Only stocks matching Ross Cameron criteria appear — no noise, no manual searching." },
+  { n: "02", title: "Filters catch the setups",   body: "Only stocks matching the momentum criteria appear — no noise, no manual searching." },
   { n: "03", title: "You make the call",           body: "Tap a ticker to open a chart. You decide whether the setup fits your trading plan." },
 ];
 
@@ -50,8 +50,7 @@ export default function LandingPage() {
               <span className="text-green-400">before they run</span>
             </h1>
             <p className="text-lg text-gray-400 mb-8 max-w-xl mx-auto lg:mx-0">
-              Real-time small-cap scanner built around Ross Cameron&apos;s exact criteria.
-              Gap%, RVOL, and float — all pre-filtered, no setup required.
+              Real-time small-cap scanner. Gap%, RVOL, and float — all pre-filtered, no setup required.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
               <Link
@@ -155,7 +154,7 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold text-gray-100 mb-3">Start scanning for free</h2>
           <p className="text-gray-400 mb-6 text-sm">
             No credit card required. Top 10 results always free.
-            Upgrade to Pro for unlimited access.
+            Upgrade to Pro for unlimited live access.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

@@ -1,10 +1,10 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import httpx
-import databento as db
+import yfinance as yf
 
 from .models import FilterConfig, StockSnapshot
 from .filters import passes_filters
@@ -13,76 +13,47 @@ from ..db.supabase import SupabaseWriter
 logger = logging.getLogger(__name__)
 
 EASTERN = ZoneInfo("America/New_York")
-MARKET_OPEN_SECONDS = 6.5 * 3600   # 9:30 AM to 4:00 PM
-FIXED_POINT = 1_000_000_000         # Databento int64 prices ÷ 1e9 = dollars
-FMP_BASE = "https://financialmodelingprep.com/api"
+MARKET_OPEN_SECONDS = 6.5 * 3600
+FIXED_POINT = 1_000_000_000
+
+
+def _fetch_ticker_meta(ticker: str) -> dict:
+    try:
+        info = yf.Ticker(ticker).fast_info
+        return {
+            "prev_close": float(getattr(info, "previous_close", 0) or 0),
+            "adv": int(getattr(info, "three_month_average_volume", 0) or 0),
+            "float_shares": int(getattr(info, "shares_outstanding", 0) or 0),
+            "company": ticker,
+        }
+    except Exception as exc:
+        logger.debug("yfinance meta failed for %s: %s", ticker, exc)
+        return {"prev_close": 0, "adv": 0, "float_shares": 0, "company": ticker}
 
 
 class ScannerEngine:
     def __init__(
         self,
         db_api_key: str,
-        fmp_api_key: str,
         writer: SupabaseWriter,
         config: FilterConfig,
     ) -> None:
         self._db_key = db_api_key
-        self._fmp_key = fmp_api_key
         self.writer = writer
         self.config = config
 
         self._id_to_ticker: dict[int, str] = {}
-        self._cache: dict[str, dict] = {}   # ticker → {prev_close, adv, float_shares, company}
+        self._cache: dict[str, dict] = {}
         self._daily_vol: dict[str, int] = {}
         self._hod: dict[str, float] = {}
         self._lod: dict[str, float] = {}
         self._in_results: set[str] = set()
+        self._pending_meta: set[str] = set()
+        self._executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="yf")
 
     async def bootstrap(self) -> None:
-        """
-        Fetch prev_close + ADV from FMP quotes (2 calls) and
-        float from FMP shares_float (1 call). Total: 3 API calls.
-        """
-        logger.info("Bootstrap: loading ticker universe from FMP…")
-        async with httpx.AsyncClient(timeout=60) as client:
-            for exchange in ("nyse", "nasdaq"):
-                try:
-                    resp = await client.get(
-                        f"{FMP_BASE}/v3/quotes/{exchange}",
-                        params={"apikey": self._fmp_key},
-                    )
-                    resp.raise_for_status()
-                    for item in resp.json():
-                        ticker = item.get("symbol", "")
-                        if not ticker or "." in ticker or len(ticker) > 5:
-                            continue
-                        self._cache[ticker] = {
-                            "prev_close": float(item.get("previousClose") or 0),
-                            "adv": int(item.get("avgVolume") or 0),
-                            "company": item.get("name", ""),
-                            "float_shares": 0,
-                        }
-                except Exception as exc:
-                    logger.error("FMP quotes/%s failed: %s", exchange, exc)
-
-            try:
-                resp = await client.get(
-                    f"{FMP_BASE}/v4/shares_float",
-                    params={"apikey": self._fmp_key},
-                )
-                resp.raise_for_status()
-                for item in resp.json():
-                    ticker = item.get("symbol", "")
-                    if ticker and ticker in self._cache:
-                        self._cache[ticker]["float_shares"] = int(
-                            float(item.get("floatShares") or 0)
-                        )
-            except Exception as exc:
-                logger.error("FMP shares_float failed: %s", exc)
-
-        # Clear stale results from a previous session
         self.writer.clear_all()
-        logger.info("Bootstrap complete: %d tickers loaded", len(self._cache))
+        logger.info("Bootstrap complete — meta fetched lazily per ticker")
 
     async def run(self, queue: asyncio.Queue) -> None:
         while True:
@@ -96,10 +67,21 @@ class ScannerEngine:
             except Exception as exc:
                 logger.error("Engine record error: %s", exc)
 
+    async def _ensure_meta(self, ticker: str) -> None:
+        if ticker in self._cache or ticker in self._pending_meta:
+            return
+        self._pending_meta.add(ticker)
+        loop = asyncio.get_running_loop()
+        meta = await loop.run_in_executor(self._executor, _fetch_ticker_meta, ticker)
+        self._cache[ticker] = meta
+        self._pending_meta.discard(ticker)
+
     async def _on_ohlcv(self, msg) -> None:
         ticker = self._id_to_ticker.get(msg.instrument_id)
         if not ticker:
             return
+
+        await self._ensure_meta(ticker)
 
         price      = msg.close / FIXED_POINT
         open_price = msg.open  / FIXED_POINT
@@ -107,7 +89,6 @@ class ScannerEngine:
         low        = msg.low   / FIXED_POINT
         vol        = int(msg.volume)
 
-        # Accumulate intra-day volume and track HOD/LOD
         self._daily_vol[ticker] = self._daily_vol.get(ticker, 0) + vol
         self._hod[ticker] = max(self._hod.get(ticker, high), high)
         self._lod[ticker] = min(self._lod.get(ticker, low), low)
@@ -129,7 +110,7 @@ class ScannerEngine:
 
         stock = StockSnapshot(
             ticker=ticker,
-            company_name=cache.get("company", ""),
+            company_name=cache.get("company", ticker),
             price=round(price, 4),
             prev_close=round(prev_close, 4),
             gap_pct=round(gap_pct, 2),

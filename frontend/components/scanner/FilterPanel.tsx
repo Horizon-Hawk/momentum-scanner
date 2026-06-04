@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock, RotateCcw } from "lucide-react";
-import { type FilterConfig, ROSS_CAMERON_DEFAULTS } from "@/lib/types";
+import { type FilterConfig, MOMENTUM_DEFAULTS } from "@/lib/types";
 
 interface Props {
   filters: FilterConfig;
@@ -54,7 +54,7 @@ function Field({
 }
 
 export function FilterPanel({ filters, onChange, isPro }: Props) {
-  const locked = !isPro;
+  const locked = false; // filters available to all; live data is the Pro gate
 
   const set = (key: keyof FilterConfig) => (v: number) =>
     onChange({ ...filters, [key]: v });
@@ -64,9 +64,9 @@ export function FilterPanel({ filters, onChange, isPro }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-200">Filters</h2>
         <button
-          onClick={() => onChange(ROSS_CAMERON_DEFAULTS)}
+          onClick={() => onChange(MOMENTUM_DEFAULTS)}
           className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-400 transition-colors"
-          title="Reset to Ross Cameron defaults"
+          title="Reset to defaults"
         >
           <RotateCcw className="w-3 h-3" />
           Reset
@@ -93,7 +93,7 @@ export function FilterPanel({ filters, onChange, isPro }: Props) {
 
       <Field
         label="Gap % min"
-        tip="Minimum gap from previous close. Ross Cameron looks for ≥10%."
+        tip="Minimum gap from previous close."
         value={filters.min_gap_pct}
         onChange={set("min_gap_pct")}
         disabled={locked}
@@ -125,7 +125,7 @@ export function FilterPanel({ filters, onChange, isPro }: Props) {
       )}
 
       <div className="pt-2 border-t border-gray-800">
-        <p className="text-xs text-gray-600 font-medium mb-1.5">Ross Cameron Defaults</p>
+        <p className="text-xs text-gray-600 font-medium mb-1.5">Default Filters</p>
         <ul className="text-xs text-gray-500 space-y-0.5">
           <li>Price: $1 – $20</li>
           <li>Float: ≤ 20M shares</li>

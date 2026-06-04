@@ -3,30 +3,24 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { type ScannerResult } from "@/lib/types";
+import { type Platform } from "@/lib/platforms";
+import { type ColumnState, getVisibleColumns } from "@/lib/columns";
 import { StockRow } from "./StockRow";
-
-const COLUMNS = [
-  { key: "ticker",      label: "Ticker",   tip: "Stock symbol" },
-  { key: "price",       label: "Price",    tip: "Latest traded price" },
-  { key: "gap_pct",     label: "Gap %",    tip: "Today's open vs yesterday's close" },
-  { key: "rvol",        label: "RVOL",     tip: "Relative volume: today's pace vs 20-day average. 5x = 5× normal activity" },
-  { key: "float_shares",label: "Float",    tip: "Shares available to trade (ex-insider). Lower = easier to move" },
-  { key: "volume",      label: "Volume",   tip: "Total shares traded today" },
-  { key: "high_of_day", label: "HOD",      tip: "High of day" },
-  { key: "low_of_day",  label: "LOD",      tip: "Low of day" },
-  { key: "last_updated",label: "Updated",  tip: "Seconds since last price update" },
-];
 
 interface Props {
   results: ScannerResult[];
   isPro: boolean;
+  platform: Platform;
+  columns: ColumnState[];
+  compact?: boolean;
 }
 
 const FREE_LIMIT = 10;
 
-export function ScannerTable({ results, isPro }: Props) {
+export function ScannerTable({ results, isPro, platform, columns, compact }: Props) {
   const visible = isPro ? results : results.slice(0, FREE_LIMIT);
-  const blurred = !isPro && results.length > FREE_LIMIT;
+  const blurred = !compact && !isPro && results.length > FREE_LIMIT;
+  const visibleCols = getVisibleColumns(columns);
 
   if (results.length === 0) {
     return (
@@ -36,7 +30,7 @@ export function ScannerTable({ results, isPro }: Props) {
         </div>
         <p className="text-gray-400 font-medium">Scanning markets…</p>
         <p className="text-gray-600 text-sm mt-1">
-          Results appear in real time when stocks match the filters.
+          Results appear when stocks match the filters.
         </p>
       </div>
     );
@@ -48,21 +42,20 @@ export function ScannerTable({ results, isPro }: Props) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-800">
-              {COLUMNS.map((col) => (
+              {visibleCols.map((col) => (
                 <th
-                  key={col.key}
+                  key={col.id}
                   className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
                   title={col.tip}
                 >
                   {col.label}
-                  <span className="ml-1 text-gray-700 cursor-help" title={col.tip}>?</span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {visible.map((r, i) => (
-              <StockRow key={r.ticker} result={r} rank={i + 1} />
+              <StockRow key={r.ticker} result={r} rank={i + 1} platform={platform} columns={visibleCols} />
             ))}
           </tbody>
         </table>

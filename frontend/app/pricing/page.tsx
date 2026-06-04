@@ -2,19 +2,18 @@ import Link from "next/link";
 import { Check, Zap } from "lucide-react";
 
 const FREE_FEATURES = [
-  "Live real-time scanner",
-  "Ross Cameron preset filters",
+  "Snapshot scanner on page load",
+  "Default momentum filters",
   "Top 10 matching results",
   "All columns: gap%, RVOL, float, HOD/LOD",
   "Market status indicator",
 ];
 
 const PRO_FEATURES = [
-  "Everything in Free",
+  "Real-time live updates",
   "Unlimited results (no row cap)",
   "Fully customizable filters",
   "Save & load filter presets",
-  "Priority data feed",
   "Email support",
 ];
 

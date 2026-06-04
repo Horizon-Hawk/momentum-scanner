@@ -5,6 +5,7 @@ import { Activity, Clock, Wifi } from "lucide-react";
 
 interface Props {
   count: number;
+  compact?: boolean;
 }
 
 function useMarketStatus() {
@@ -48,10 +49,25 @@ const STATUS_STYLES = {
   closed: { dot: "bg-gray-500",                 label: "Market Closed",   text: "text-gray-400" },
 };
 
-export function StatsBar({ count }: Props) {
+export function StatsBar({ count, compact }: Props) {
   const status = useMarketStatus();
   const etTime = useEtTime();
   const s = STATUS_STYLES[status];
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3 text-xs">
+        <span className={`flex items-center gap-1.5 font-medium ${s.text}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+          {s.label}
+        </span>
+        <span className="text-gray-400">
+          <span className="font-semibold text-gray-200">{count}</span> matching
+        </span>
+        <span className="text-gray-500 font-mono">{etTime} ET</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-4 px-1 py-2 text-sm">

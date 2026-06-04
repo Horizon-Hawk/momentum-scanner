@@ -17,7 +17,7 @@ logging.basicConfig(
 from db.supabase import SupabaseWriter
 from feeds.databento_feed import DatabentoFeed
 from scanner.engine import ScannerEngine
-from scanner.filters import ROSS_CAMERON_DEFAULTS
+from scanner.filters import MOMENTUM_DEFAULTS
 
 
 @asynccontextmanager
@@ -28,9 +28,8 @@ async def lifespan(app: FastAPI):
     writer  = SupabaseWriter()
     engine  = ScannerEngine(
         db_api_key=os.environ["DATABENTO_API_KEY"],
-        fmp_api_key=os.environ["FMP_API_KEY"],
         writer=writer,
-        config=ROSS_CAMERON_DEFAULTS,
+        config=MOMENTUM_DEFAULTS,
     )
     feed = DatabentoFeed(
         api_key=os.environ["DATABENTO_API_KEY"],

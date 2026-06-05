@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { TrendingUp, BarChart2, LogIn } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { TrendingUp, LogIn } from "lucide-react";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClient();
+
+  const openLogin = () => router.push(`${pathname}?login=1`);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -64,13 +67,13 @@ export function Header() {
               </button>
             </>
           ) : (
-            <Link
-              href="/?login=1"
+            <button
+              onClick={openLogin}
               className="flex items-center gap-1.5 text-sm bg-green-500 hover:bg-green-400 text-gray-950 font-semibold px-3 py-1.5 rounded-md transition-colors"
             >
               <LogIn className="w-3.5 h-3.5" />
               Sign in
-            </Link>
+            </button>
           )}
         </div>
       </div>

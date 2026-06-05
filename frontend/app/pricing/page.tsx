@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check, Zap } from "lucide-react";
+import { UpgradeButton } from "@/components/pricing/UpgradeButton";
 
 const FREE_FEATURES = [
   "Snapshot scanner on page load",
@@ -88,19 +89,5 @@ export default function PricingPage() {
         Prices in USD. Subscriptions renew monthly. Not financial advice.
       </p>
     </div>
-  );
-}
-
-function UpgradeButton() {
-  "use client";
-  return (
-    <form action="/api/subscribe" method="POST">
-      <button
-        type="submit"
-        className="w-full bg-green-500 hover:bg-green-400 text-gray-950 font-bold py-3 rounded-lg transition-colors text-sm"
-      >
-        Upgrade to Pro — $29/mo
-      </button>
-    </form>
   );
 }

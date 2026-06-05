@@ -5,7 +5,7 @@ import databento as db
 
 logger = logging.getLogger(__name__)
 
-DATASET = "DBEQ.MINI"
+DATASET = "EQUS.MINI"
 
 
 class DatabentoFeed:
